@@ -1,17 +1,68 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+# This is a test template yaml
+# This does not do anything yet.
 
 trigger:
 - master
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: Linux-latest
 
-variables:
-  buildConfiguration: 'Release'
-
-steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+stages:
+- stage: Build
+  displayName: 'Build the project stage'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build Job'
+    steps:
+    - script: |
+        echo "Restoring project dependencies..."
+      displayName: 'restore dependencies'
+    - script: |
+        echo "Running tests..."
+      displayName: 'run Unit tests'
+- stage: Test
+  displayName: 'run unit tests stage'
+  dependsOn: Build
+  isSkippable: false
+  jobs:
+  - job: TestJob
+    displayName: 'Test Job'
+    steps:
+    - script: |
+        echo "Running unit tests..."
+        echo "All tests completed successfully."
+      displayName: 'run unit tests'
+- stage: DeployToStaging
+  displayName: 'Deploy project to a staging env'
+  dependsOn: Test
+  isSkippable: false
+  jobs:
+  - job: DeployToStagingJob
+    displayName: 'Deploy Job to staging'
+    steps:
+    - script: |
+        echo "Deploying the project to a staging environment..."
+        echo "Deployment completed successfully."
+      displayName: 'deploy to staging env'
+- stage: DeployToProduction
+  displayName: 'Deploy project to a Production env'
+  dependsOn: DeployToStaging
+  lockBehavior: sequential
+  condition: and(succeeded(), in(ariables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - job: DeployProduction
+    displayName: 'Deploy Job to Production'
+    steps:
+    - script: |
+        echo "Deploying the project to a Production environment..."
+      displayName: 'deploy to Production env'
+  -job: waitForValidation
+    displayName: 'Wait for external validation'
+    pool: server
+    timeoutInMinutes: 1250
+    steps:
+    - task: ManualValidation@1
+      inputs:
+        notifyUsers: 'rajannd@hootmail.com'
+        instructions: 'Please validate the deployment to production.'
+        onTimeout: 'resume'
