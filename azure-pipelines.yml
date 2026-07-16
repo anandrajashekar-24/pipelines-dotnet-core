@@ -48,7 +48,7 @@ stages:
   displayName: 'Deploy project to a Production env'
   dependsOn: DeployToStaging
   lockBehavior: sequential
-  condition: and(succeeded(), in(ariables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   jobs:
   - job: DeployProduction
     displayName: 'Deploy Job to Production'
@@ -56,7 +56,7 @@ stages:
     - script: |
         echo "Deploying the project to a Production environment..."
       displayName: 'deploy to Production env'
-  -job: waitForValidation
+  - job: waitForValidation
     displayName: 'Wait for external validation'
     pool: server
     timeoutInMinutes: 1250
